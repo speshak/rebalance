@@ -11,6 +11,17 @@ from rebalance import Price
 from rebalance.portfolio import rebalancing_helper
 
 
+class TargetException(Exception):
+    """
+    Exception raised when target is not valid.
+    """
+
+    def __init__(self, message, target, total):
+        self.message = message
+        self.target = target
+        self.total = total
+
+
 class Portfolio:
     """
     Portfolio class.
@@ -275,8 +286,14 @@ class Portfolio:
         target_allocation_np = np.fromiter(
             target_allocation_reordered.values(), dtype=float)
 
-        assert abs(np.sum(target_allocation_np) -
-                   100.) <= 1E-2, "target allocation must sum up to 100%."
+        target_total = abs(np.sum(target_allocation_np) - 100.)
+
+        if target_total <= 1E-2:
+            raise TargetException(
+                "target allocation must sum up to 100%.",
+                target_allocation_np,
+                target_total
+            )
 
         # offload heavy work
         (balanced_portfolio, new_units, prices, cost, exchange_history) = rebalancing_helper.rebalance(self, target_allocation_np)
